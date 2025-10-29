@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,12 @@ interface Excerpt {
   work: string;
   year: number;
   theme: string;
+}
+
+interface SearchHistoryItem {
+  query: string;
+  result_count: number;
+  searched_at: string;
 }
 
 const mockExcerpts: Excerpt[] = [
@@ -64,6 +70,36 @@ export default function Index() {
   const [displayedExcerpts, setDisplayedExcerpts] = useState<Excerpt[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+
+  useEffect(() => {
+    loadSearchHistory();
+  }, []);
+
+  const loadSearchHistory = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/4aba6001-9a18-46b0-b062-18e5fb5ae944');
+      if (response.ok) {
+        const data = await response.json();
+        setSearchHistory(data.history || []);
+      }
+    } catch (error) {
+      console.error('Failed to load search history');
+    }
+  };
+
+  const saveToHistory = async (query: string, resultCount: number) => {
+    try {
+      await fetch('https://functions.poehali.dev/4aba6001-9a18-46b0-b062-18e5fb5ae944', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, result_count: resultCount })
+      });
+      loadSearchHistory();
+    } catch (error) {
+      console.error('Failed to save search history');
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -88,7 +124,10 @@ export default function Index() {
       }
       
       const data = await response.json();
-      setDisplayedExcerpts(data.excerpts || []);
+      const excerpts = data.excerpts || [];
+      setDisplayedExcerpts(excerpts);
+      
+      await saveToHistory(searchQuery, excerpts.length);
     } catch (error) {
       setSearchError('Не удалось выполнить поиск. Попробуйте позже.');
       setDisplayedExcerpts([]);
@@ -112,7 +151,7 @@ export default function Index() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Icon name="BookOpen" size={32} className="text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Литературная сокровищница</h1>
+              <h1 className="text-3xl font-bold text-foreground">Книжная полка</h1>
             </div>
           </div>
         </div>
@@ -140,22 +179,32 @@ export default function Index() {
 
         <TabsContent value="home" className="animate-fade-in">
           <div className="max-w-4xl mx-auto space-y-8">
-            <div className="text-center space-y-4 py-12">
-              <h2 className="text-5xl font-bold text-foreground mb-4">
-                Найди идеальную цитату
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Исследуй мир литературы через эмоциональный ИИ-поиск. 
-                Введи тему — получи десятки отрывков из классических произведений.
-              </p>
-              <Button 
-                size="lg" 
-                onClick={() => setCurrentTab('search')}
-                className="mt-6 text-lg px-8"
-              >
-                Начать поиск
-                <Icon name="ArrowRight" size={20} className="ml-2" />
-              </Button>
+            <div 
+              className="text-center space-y-4 py-20 px-6 rounded-lg relative overflow-hidden"
+              style={{
+                backgroundImage: 'url(https://cdn.poehali.dev/projects/28118dcc-5ab5-4658-bc52-dbf901efbc4c/files/ead7af91-81ea-4590-8438-450131726a8e.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+              <div className="relative z-10 space-y-4">
+                <h2 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                  Найди идеальную цитату
+                </h2>
+                <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow">
+                  Исследуй мир литературы через эмоциональный ИИ-поиск. 
+                  Введи тему — получи десятки отрывков из классических произведений.
+                </p>
+                <Button 
+                  size="lg" 
+                  onClick={() => setCurrentTab('search')}
+                  className="mt-6 text-lg px-8 bg-white text-primary hover:bg-white/90"
+                >
+                  Начать поиск
+                  <Icon name="ArrowRight" size={20} className="ml-2" />
+                </Button>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mt-12">
@@ -245,6 +294,35 @@ export default function Index() {
                 ))}
               </div>
             </div>
+
+            {searchHistory.length > 0 && (
+              <Card className="bg-muted/30">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Icon name="History" size={20} />
+                    История поиска
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {searchHistory.slice(0, 5).map((item, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearchQuery(item.query);
+                          handleSearch();
+                        }}
+                        className="text-xs"
+                      >
+                        {item.query} ({item.result_count})
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="space-y-4">
               {isSearching ? (
@@ -367,9 +445,19 @@ export default function Index() {
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl font-bold text-center mb-8">О проекте</h2>
             
+            <div 
+              className="rounded-lg overflow-hidden mb-6"
+              style={{
+                backgroundImage: 'url(https://cdn.poehali.dev/projects/28118dcc-5ab5-4658-bc52-dbf901efbc4c/files/606671fa-5b4b-48ee-86ef-e0c8eec3f792.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                height: '300px'
+              }}
+            />
+            
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">Литературная сокровищница</CardTitle>
+                <CardTitle className="text-2xl">Книжная полка</CardTitle>
                 <CardDescription className="text-base">
                   ИИ-поисковик по отрывкам из книг и рассказов
                 </CardDescription>

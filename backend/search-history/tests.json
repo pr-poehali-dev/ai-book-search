@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Get search history",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "history": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Save search to history",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "query": "любовь",
+        "result_count": 5
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
