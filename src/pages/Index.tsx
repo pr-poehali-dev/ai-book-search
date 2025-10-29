@@ -62,19 +62,39 @@ export default function Index() {
   const [currentTab, setCurrentTab] = useState('home');
   const [favorites, setFavorites] = useState<number[]>([]);
   const [displayedExcerpts, setDisplayedExcerpts] = useState<Excerpt[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setDisplayedExcerpts([]);
       return;
     }
     
-    const filtered = mockExcerpts.filter(excerpt => 
-      excerpt.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      excerpt.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      excerpt.author.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setDisplayedExcerpts(filtered);
+    setIsSearching(true);
+    setSearchError('');
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/bb03b1c0-73c9-4e73-859b-16c135eb1710', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Ошибка поиска');
+      }
+      
+      const data = await response.json();
+      setDisplayedExcerpts(data.excerpts || []);
+    } catch (error) {
+      setSearchError('Не удалось выполнить поиск. Попробуйте позже.');
+      setDisplayedExcerpts([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const toggleFavorite = (id: number) => {
@@ -191,25 +211,34 @@ export default function Index() {
                   placeholder="Например: описание любви, одиночество, счастье..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
                   className="text-lg py-6"
+                  disabled={isSearching}
                 />
-                <Button onClick={handleSearch} size="lg" className="px-8">
-                  <Icon name="Search" size={20} />
+                <Button onClick={handleSearch} size="lg" className="px-8" disabled={isSearching}>
+                  {isSearching ? (
+                    <Icon name="Loader2" size={20} className="animate-spin" />
+                  ) : (
+                    <Icon name="Search" size={20} />
+                  )}
                 </Button>
               </div>
 
+              {searchError && (
+                <p className="text-center text-red-500 text-sm">{searchError}</p>
+              )}
+
               <div className="flex gap-2 flex-wrap justify-center">
-                {['любовь', 'философия', 'одиночество', 'счастье'].map(theme => (
+                {['любовь', 'философия', 'одиночество', 'счастье', 'дружба', 'мудрость', 'страх'].map(theme => (
                   <Button
                     key={theme}
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSearchQuery(theme);
-                      const filtered = mockExcerpts.filter(e => e.theme === theme);
-                      setDisplayedExcerpts(filtered);
+                      handleSearch();
                     }}
+                    disabled={isSearching}
                   >
                     {theme}
                   </Button>
@@ -218,7 +247,14 @@ export default function Index() {
             </div>
 
             <div className="space-y-4">
-              {displayedExcerpts.length > 0 ? (
+              {isSearching ? (
+                <Card className="py-12">
+                  <CardContent className="text-center text-muted-foreground">
+                    <Icon name="Loader2" size={48} className="mx-auto mb-4 animate-spin" />
+                    <p>Ищем отрывки...</p>
+                  </CardContent>
+                </Card>
+              ) : displayedExcerpts.length > 0 ? (
                 <>
                   <p className="text-muted-foreground text-center">
                     Найдено отрывков: {displayedExcerpts.length}
