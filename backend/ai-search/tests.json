@@ -1,0 +1,45 @@
+{
+  "tests": [
+    {
+      "name": "Search for love excerpts",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "query": "любовь"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "query": "string",
+        "count": "number",
+        "excerpts": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Search for philosophy excerpts",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "query": "философия"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "excerpts": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Handle empty query",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "query": ""
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
