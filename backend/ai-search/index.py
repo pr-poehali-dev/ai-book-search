@@ -1,7 +1,8 @@
 import json
 import os
 from typing import Dict, Any, List
-import re
+import httpx
+from openai import OpenAI
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -37,7 +38,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     body_data = json.loads(event.get('body', '{}'))
-    query = body_data.get('query', '').strip().lower()
+    query = body_data.get('query', '').strip()
     
     if not query:
         return {
@@ -928,49 +929,106 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     ]
     
-    def normalize_text(text: str) -> str:
-        return re.sub(r'[^\w\s]', '', text.lower())
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'OpenAI API key not configured'}),
+            'isBase64Encoded': False
+        }
     
-    def calculate_relevance(excerpt: Dict[str, Any], search_query: str) -> int:
-        score = 0
-        normalized_query = normalize_text(search_query)
-        query_words = set(normalized_query.split())
-        
-        excerpt_text = normalize_text(excerpt.get('text', ''))
-        excerpt_theme = normalize_text(excerpt.get('theme', ''))
-        excerpt_author = normalize_text(excerpt.get('author', ''))
-        excerpt_work = normalize_text(excerpt.get('work', ''))
-        
-        for word in query_words:
-            if word in excerpt_theme:
-                score += 50
-            if word in excerpt_text:
-                score += 30
-            if word in excerpt_author:
-                score += 20
-            if word in excerpt_work:
-                score += 10
-        
-        for word in query_words:
-            if len(word) > 3:
-                for excerpt_word in excerpt_text.split():
-                    if word in excerpt_word or excerpt_word in word:
-                        score += 5
-        
-        return score
+    http_client = httpx.Client(
+        timeout=30.0,
+        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+    )
+    client = OpenAI(api_key=api_key, http_client=http_client)
     
-    results = []
-    for excerpt in excerpts_database:
-        relevance = calculate_relevance(excerpt, query)
-        if relevance > 0:
-            results.append({
-                'excerpt': excerpt,
-                'relevance': relevance
-            })
+    database_json = json.dumps(excerpts_database, ensure_ascii=False)
     
-    results.sort(key=lambda x: x['relevance'], reverse=True)
+    prompt = f"""Ты литературный поисковик. У меня есть база из {len(excerpts_database)} цитат.
+
+Запрос пользователя: "{query}"
+
+База цитат:
+{database_json}
+
+Твоя задача:
+1. Найди ВСЕ цитаты, которые подходят к запросу по смыслу, эмоции или теме
+2. Отсортируй по релевантности (самые подходящие первыми)
+3. Верни JSON массив с цитатами
+
+Учитывай синонимы (любовь=романтика, грусть=печаль, счастье=радость)
+
+Ответь ТОЛЬКО JSON в формате: {{"excerpts": [массив объектов]}}"""
     
-    excerpts = [item['excerpt'] for item in results[:20]]
+    use_fallback = False
+    excerpts = []
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты возвращаешь только чистый JSON без markdown."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        
+        if ai_response.startswith('```json'):
+            ai_response = ai_response[7:]
+        elif ai_response.startswith('```'):
+            ai_response = ai_response[3:]
+        if ai_response.endswith('```'):
+            ai_response = ai_response[:-3]
+        ai_response = ai_response.strip()
+        
+        result = json.loads(ai_response)
+        excerpts = result.get('excerpts', [])
+    except Exception as e:
+        error_message = str(e)
+        if 'unsupported_country_region_territory' in error_message or '403' in error_message:
+            use_fallback = True
+        else:
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': f'Search failed: {error_message}'}),
+                'isBase64Encoded': False
+            }
+    
+    if use_fallback or len(excerpts) == 0:
+        query_lower = query.lower()
+        query_words = set(query_lower.split())
+        
+        scored_excerpts = []
+        for excerpt in excerpts_database:
+            score = 0
+            text_lower = excerpt.get('text', '').lower()
+            theme_lower = excerpt.get('theme', '').lower()
+            author_lower = excerpt.get('author', '').lower()
+            
+            for word in query_words:
+                if word in theme_lower:
+                    score += 50
+                if word in text_lower:
+                    score += 30
+                if word in author_lower:
+                    score += 20
+            
+            if score > 0:
+                scored_excerpts.append({'excerpt': excerpt, 'score': score})
+        
+        scored_excerpts.sort(key=lambda x: x['score'], reverse=True)
+        excerpts = [item['excerpt'] for item in scored_excerpts[:20]]
     
     for i, excerpt in enumerate(excerpts):
         excerpt['id'] = i + 1
