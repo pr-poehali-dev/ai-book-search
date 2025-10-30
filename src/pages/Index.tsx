@@ -78,13 +78,15 @@ export default function Index() {
 
   const loadSearchHistory = async () => {
     try {
-      const response = await fetch('https://functions.poehali.dev/4aba6001-9a18-46b0-b062-18e5fb5ae944');
+      const response = await fetch('https://functions.poehali.dev/4aba6001-9a18-46b0-b062-18e5fb5ae944', {
+        method: 'GET'
+      });
       if (response.ok) {
         const data = await response.json();
         setSearchHistory(data.history || []);
       }
     } catch (error) {
-      console.error('Failed to load search history');
+      console.error('Failed to load search history', error);
     }
   };
 
