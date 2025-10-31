@@ -2,7 +2,6 @@ import json
 import os
 from typing import Dict, Any, List
 import httpx
-from openai import OpenAI
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -941,12 +940,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    http_client = httpx.Client(
-        timeout=30.0,
-        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
-    )
-    client = OpenAI(api_key=api_key, http_client=http_client)
-    
     database_json = json.dumps(excerpts_database, ensure_ascii=False)
     
     prompt = f"""Ты литературный поисковик. У меня есть база из {len(excerpts_database)} цитат.
@@ -969,27 +962,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     excerpts = []
     
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Ты возвращаешь только чистый JSON без markdown."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
-        )
-        
-        ai_response = response.choices[0].message.content.strip()
-        
-        if ai_response.startswith('```json'):
-            ai_response = ai_response[7:]
-        elif ai_response.startswith('```'):
-            ai_response = ai_response[3:]
-        if ai_response.endswith('```'):
-            ai_response = ai_response[:-3]
-        ai_response = ai_response.strip()
-        
-        result = json.loads(ai_response)
-        excerpts = result.get('excerpts', [])
+        with httpx.Client(timeout=30.0) as http_client:
+            response = http_client.post(
+                'https://api.groq.com/openai/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'model': 'llama-3.1-70b-versatile',
+                    'messages': [
+                        {'role': 'system', 'content': 'Ты возвращаешь только чистый JSON без markdown.'},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    'temperature': 0.3
+                }
+            )
+            response.raise_for_status()
+            
+            ai_data = response.json()
+            ai_response = ai_data['choices'][0]['message']['content'].strip()
+            
+            if ai_response.startswith('```json'):
+                ai_response = ai_response[7:]
+            elif ai_response.startswith('```'):
+                ai_response = ai_response[3:]
+            if ai_response.endswith('```'):
+                ai_response = ai_response[:-3]
+            ai_response = ai_response.strip()
+            
+            result = json.loads(ai_response)
+            excerpts = result.get('excerpts', [])
     except Exception as e:
         error_message = str(e)
         if 'unsupported_country_region_territory' in error_message or '403' in error_message:
