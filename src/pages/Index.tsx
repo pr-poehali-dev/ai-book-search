@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
@@ -71,6 +72,7 @@ export default function Index() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [selectedExcerpt, setSelectedExcerpt] = useState<Excerpt | null>(null);
 
   useEffect(() => {
     loadSearchHistory();
@@ -340,7 +342,11 @@ export default function Index() {
                     Найдено отрывков: {displayedExcerpts.length}
                   </p>
                   {displayedExcerpts.map((excerpt) => (
-                    <Card key={excerpt.id} className="animate-scale-in hover:shadow-lg transition-all">
+                    <Card 
+                      key={excerpt.id} 
+                      className="animate-scale-in hover:shadow-lg transition-all cursor-pointer"
+                      onClick={() => setSelectedExcerpt(excerpt)}
+                    >
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -352,7 +358,10 @@ export default function Index() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => toggleFavorite(excerpt.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(excerpt.id);
+                            }}
                           >
                             <Icon 
                               name="Heart" 
@@ -514,6 +523,55 @@ export default function Index() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={selectedExcerpt !== null} onOpenChange={(open) => !open && setSelectedExcerpt(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          {selectedExcerpt && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">{selectedExcerpt.work}</DialogTitle>
+                <DialogDescription className="text-lg">
+                  {selectedExcerpt.author}, {selectedExcerpt.year}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-lg leading-relaxed italic border-l-4 border-primary pl-4 py-2 bg-accent/5">
+                    {selectedExcerpt.text}
+                  </p>
+                </div>
+                <div className="border-t pt-6">
+                  <h3 className="text-xl font-semibold mb-4">О произведении</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    «{selectedExcerpt.work}» — классическое произведение {selectedExcerpt.author}, 
+                    опубликованное в {selectedExcerpt.year} году. Это произведение исследует темы {selectedExcerpt.theme} 
+                    и остается актуальным для современных читателей.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
+                    <Icon name="Tag" size={14} />
+                    {selectedExcerpt.theme}
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => toggleFavorite(selectedExcerpt.id)}
+                    className="ml-auto"
+                  >
+                    <Icon 
+                      name="Heart" 
+                      size={16}
+                      className={favorites.includes(selectedExcerpt.id) ? 'fill-red-500 text-red-500 mr-2' : 'mr-2'}
+                    />
+                    {favorites.includes(selectedExcerpt.id) ? 'В избранном' : 'В избранное'}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
