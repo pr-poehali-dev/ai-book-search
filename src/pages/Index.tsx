@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import HeroSection from '@/components/HeroSection';
+import FeatureCards from '@/components/FeatureCards';
+import SearchTab from '@/components/SearchTab';
+import FavoritesTab from '@/components/FavoritesTab';
+import AboutTab from '@/components/AboutTab';
+import ExcerptDialog from '@/components/ExcerptDialog';
 
 interface Excerpt {
   id: number;
@@ -183,395 +185,46 @@ export default function Index() {
 
         <TabsContent value="home" className="animate-fade-in">
           <div className="max-w-4xl mx-auto space-y-8">
-            <div 
-              className="text-center space-y-4 py-20 px-6 rounded-lg relative overflow-hidden"
-              style={{
-                backgroundImage: 'url(https://cdn.poehali.dev/projects/28118dcc-5ab5-4658-bc52-dbf901efbc4c/files/ead7af91-81ea-4590-8438-450131726a8e.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-              <div className="relative z-10 space-y-4">
-                <h2 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                  Найди идеальную цитату
-                </h2>
-                <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow">
-                  Исследуй мир литературы через эмоциональный ИИ-поиск. 
-                  Введи тему — получи десятки отрывков из классических произведений.
-                </p>
-                <Button 
-                  size="lg" 
-                  onClick={() => setCurrentTab('search')}
-                  className="mt-6 text-lg px-8 bg-white text-primary hover:bg-white/90"
-                >
-                  Начать поиск
-                  <Icon name="ArrowRight" size={20} className="ml-2" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mt-12">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Icon name="Sparkles" size={32} className="text-accent mb-2" />
-                  <CardTitle>ИИ-поиск</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Умный алгоритм понимает эмоциональный контекст и находит точные совпадения
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Icon name="Library" size={32} className="text-accent mb-2" />
-                  <CardTitle>Обширная база</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Тысячи отрывков из классической и современной литературы
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Icon name="Bookmark" size={32} className="text-accent mb-2" />
-                  <CardTitle>Избранное</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Сохраняй понравившиеся цитаты и создавай личную коллекцию
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <HeroSection onSearchClick={() => setCurrentTab('search')} />
+            <FeatureCards />
           </div>
         </TabsContent>
 
         <TabsContent value="search" className="animate-fade-in">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-3xl font-bold text-center">Поиск отрывков</h2>
-              <p className="text-center text-muted-foreground">
-                Введите тему или ключевые слова
-              </p>
-              
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Например: описание любви, одиночество, счастье..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
-                  className="text-lg py-6"
-                  disabled={isSearching}
-                />
-                <Button onClick={handleSearch} size="lg" className="px-8" disabled={isSearching}>
-                  {isSearching ? (
-                    <Icon name="Loader2" size={20} className="animate-spin" />
-                  ) : (
-                    <Icon name="Search" size={20} />
-                  )}
-                </Button>
-              </div>
-
-              {searchError && (
-                <p className="text-center text-red-500 text-sm">{searchError}</p>
-              )}
-
-              <div className="flex gap-2 flex-wrap justify-center">
-                {['любовь', 'философия', 'одиночество', 'счастье', 'дружба', 'мудрость', 'страх'].map(theme => (
-                  <Button
-                    key={theme}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery(theme);
-                      handleSearch();
-                    }}
-                    disabled={isSearching}
-                  >
-                    {theme}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {searchHistory.length > 0 && (
-              <Card className="bg-muted/30">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Icon name="History" size={20} />
-                    История поиска
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {searchHistory.slice(0, 5).map((item, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSearchQuery(item.query);
-                          handleSearch();
-                        }}
-                        className="text-xs"
-                      >
-                        {item.query} ({item.result_count})
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="space-y-4">
-              {isSearching ? (
-                <Card className="py-12">
-                  <CardContent className="text-center text-muted-foreground">
-                    <Icon name="Loader2" size={48} className="mx-auto mb-4 animate-spin" />
-                    <p>Ищем отрывки...</p>
-                  </CardContent>
-                </Card>
-              ) : displayedExcerpts.length > 0 ? (
-                <>
-                  <p className="text-muted-foreground text-center">
-                    Найдено отрывков: {displayedExcerpts.length}
-                  </p>
-                  {displayedExcerpts.map((excerpt) => (
-                    <Card 
-                      key={excerpt.id} 
-                      className="animate-scale-in hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => setSelectedExcerpt(excerpt)}
-                    >
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl">{excerpt.author}</CardTitle>
-                            <CardDescription className="text-base">
-                              {excerpt.work} ({excerpt.year})
-                            </CardDescription>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(excerpt.id);
-                            }}
-                          >
-                            <Icon 
-                              name="Heart" 
-                              size={24} 
-                              className={favorites.includes(excerpt.id) ? 'fill-red-500 text-red-500' : ''}
-                            />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <blockquote className="text-lg italic text-foreground/90 border-l-4 border-accent pl-4">
-                          "{excerpt.text}"
-                        </blockquote>
-                      </CardContent>
-                      <CardFooter>
-                        <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                          {excerpt.theme}
-                        </span>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </>
-              ) : searchQuery ? (
-                <Card className="py-12">
-                  <CardContent className="text-center text-muted-foreground">
-                    <Icon name="SearchX" size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>По вашему запросу ничего не найдено</p>
-                  </CardContent>
-                </Card>
-              ) : null}
-            </div>
-          </div>
+          <SearchTab
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            handleSearch={handleSearch}
+            isSearching={isSearching}
+            searchError={searchError}
+            displayedExcerpts={displayedExcerpts}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+            setSelectedExcerpt={setSelectedExcerpt}
+          />
         </TabsContent>
 
         <TabsContent value="favorites" className="animate-fade-in">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <h2 className="text-3xl font-bold text-center">Избранные отрывки</h2>
-            
-            {favoriteExcerpts.length > 0 ? (
-              <div className="space-y-4">
-                {favoriteExcerpts.map((excerpt) => (
-                  <Card key={excerpt.id} className="animate-scale-in hover:shadow-lg transition-all">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <CardTitle className="text-xl">{excerpt.author}</CardTitle>
-                          <CardDescription className="text-base">
-                            {excerpt.work} ({excerpt.year})
-                          </CardDescription>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleFavorite(excerpt.id)}
-                        >
-                          <Icon 
-                            name="Heart" 
-                            size={24} 
-                            className="fill-red-500 text-red-500"
-                          />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <blockquote className="text-lg italic text-foreground/90 border-l-4 border-accent pl-4">
-                        "{excerpt.text}"
-                      </blockquote>
-                    </CardContent>
-                    <CardFooter>
-                      <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                        {excerpt.theme}
-                      </span>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="py-12">
-                <CardContent className="text-center text-muted-foreground space-y-4">
-                  <Icon name="BookmarkX" size={48} className="mx-auto opacity-50" />
-                  <p className="text-lg">У вас пока нет избранных отрывков</p>
-                  <Button onClick={() => setCurrentTab('search')} variant="outline">
-                    Перейти к поиску
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <FavoritesTab
+            favoriteExcerpts={favoriteExcerpts}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+            setSelectedExcerpt={setSelectedExcerpt}
+          />
         </TabsContent>
 
         <TabsContent value="about" className="animate-fade-in">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <h2 className="text-3xl font-bold text-center mb-8">О проекте</h2>
-            
-            <div 
-              className="rounded-lg overflow-hidden mb-6"
-              style={{
-                backgroundImage: 'url(https://cdn.poehali.dev/projects/28118dcc-5ab5-4658-bc52-dbf901efbc4c/files/606671fa-5b4b-48ee-86ef-e0c8eec3f792.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                height: '300px'
-              }}
-            />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Книжная полка</CardTitle>
-                <CardDescription className="text-base">
-                  ИИ-поисковик по отрывкам из книг и рассказов
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-muted-foreground">
-                <p>
-                  Наш проект создан для тех, кто любит литературу и ищет вдохновение 
-                  в словах великих писателей. Мы собрали обширную коллекцию отрывков 
-                  из классических и современных произведений.
-                </p>
-                
-                <div className="space-y-3 pt-4">
-                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    <Icon name="Sparkles" size={20} />
-                    Возможности
-                  </h3>
-                  <ul className="space-y-2 pl-7">
-                    <li>🔍 Умный поиск по эмоциональному контексту</li>
-                    <li>📚 База отрывков из мировой литературы</li>
-                    <li>❤️ Сохранение избранных цитат</li>
-                    <li>🎯 Тематический поиск</li>
-                    <li>📖 Указание источника каждого отрывка</li>
-                  </ul>
-                </div>
-
-                <div className="space-y-3 pt-4">
-                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    <Icon name="Target" size={20} />
-                    Как пользоваться
-                  </h3>
-                  <ol className="space-y-2 pl-7 list-decimal">
-                    <li>Перейдите в раздел "Поиск"</li>
-                    <li>Введите тему или ключевые слова (например, "любовь", "одиночество")</li>
-                    <li>Изучите найденные отрывки</li>
-                    <li>Добавьте понравившиеся в избранное</li>
-                  </ol>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-accent/10 border-accent">
-              <CardContent className="pt-6">
-                <p className="text-center text-foreground italic">
-                  "Книги — это корабли мысли, странствующие по волнам времени и 
-                  бережно несущие свой драгоценный груз от поколения к поколению."
-                </p>
-                <p className="text-center text-muted-foreground mt-2">
-                  — Фрэнсис Бэкон
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <AboutTab searchHistory={searchHistory} />
         </TabsContent>
       </Tabs>
 
-      <Dialog open={selectedExcerpt !== null} onOpenChange={(open) => !open && setSelectedExcerpt(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          {selectedExcerpt && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">{selectedExcerpt.work}</DialogTitle>
-                <DialogDescription className="text-lg">
-                  {selectedExcerpt.author}, {selectedExcerpt.year}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6 mt-4">
-                <div className="prose prose-lg max-w-none">
-                  <p className="text-lg leading-relaxed italic border-l-4 border-primary pl-4 py-2 bg-accent/5">
-                    {selectedExcerpt.text}
-                  </p>
-                </div>
-                <div className="border-t pt-6">
-                  <h3 className="text-xl font-semibold mb-4">О произведении</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    «{selectedExcerpt.work}» — классическое произведение {selectedExcerpt.author}, 
-                    опубликованное в {selectedExcerpt.year} году. Это произведение исследует темы {selectedExcerpt.theme} 
-                    и остается актуальным для современных читателей.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 pt-4">
-                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                    <Icon name="Tag" size={14} />
-                    {selectedExcerpt.theme}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => toggleFavorite(selectedExcerpt.id)}
-                    className="ml-auto"
-                  >
-                    <Icon 
-                      name="Heart" 
-                      size={16}
-                      className={favorites.includes(selectedExcerpt.id) ? 'fill-red-500 text-red-500 mr-2' : 'mr-2'}
-                    />
-                    {favorites.includes(selectedExcerpt.id) ? 'В избранном' : 'В избранное'}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ExcerptDialog
+        excerpt={selectedExcerpt}
+        isOpen={!!selectedExcerpt}
+        onClose={() => setSelectedExcerpt(null)}
+        isFavorite={selectedExcerpt ? favorites.includes(selectedExcerpt.id) : false}
+        onToggleFavorite={toggleFavorite}
+      />
     </div>
   );
 }
