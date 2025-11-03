@@ -20,35 +20,35 @@ interface ExcerptCardProps {
 
 export default function ExcerptCard({ excerpt, isFavorite, onToggleFavorite, onViewDetails }: ExcerptCardProps) {
   return (
-    <Card className="hover:border-primary/30 transition-all border border-border bg-white">
+    <Card className="hover:shadow-lg transition-all border border-border bg-white rounded-xl overflow-hidden">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-lg leading-relaxed text-foreground mb-4 font-light">
+            <p className="text-lg leading-relaxed text-foreground mb-4">
               "{excerpt.text}"
             </p>
-            <div className="space-y-1 text-sm">
-              <p className="font-medium text-foreground">{excerpt.author}</p>
-              <p className="text-muted-foreground font-light">«{excerpt.work}», {excerpt.year}</p>
+            <div className="space-y-1">
+              <p className="font-bold text-foreground">{excerpt.author}</p>
+              <p className="text-sm text-muted-foreground">«{excerpt.work}», {excerpt.year}</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onToggleFavorite(excerpt.id)}
-            className="shrink-0 h-9 w-9"
+            className="shrink-0 h-10 w-10"
           >
             <Icon 
               name={isFavorite ? "Heart" : "Heart"} 
-              size={18} 
-              className={isFavorite ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}
+              size={20} 
+              className={isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-500"}
             />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs px-2.5 py-1 rounded bg-muted text-muted-foreground font-medium uppercase tracking-wide">
+          <span className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold uppercase">
             {excerpt.theme}
           </span>
         </div>
@@ -56,8 +56,7 @@ export default function ExcerptCard({ excerpt, isFavorite, onToggleFavorite, onV
       <CardFooter className="pt-0">
         <Button 
           variant="outline" 
-          size="sm"
-          className="text-sm hover:bg-muted"
+          className="text-sm border-border hover:bg-muted rounded-lg"
           onClick={() => onViewDetails(excerpt)}
         >
           Подробнее

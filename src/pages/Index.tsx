@@ -152,41 +152,57 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-5">
+      <header className="border-b border-border bg-white sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Icon name="BookOpen" size={28} className="text-primary" />
-              <span className="text-2xl font-semibold text-foreground">Книжная полка</span>
+              <Icon name="BookOpen" size={32} className="text-primary" />
+              <span className="text-2xl font-bold text-foreground uppercase tracking-tight">Книжная полка</span>
             </div>
           </div>
         </div>
       </header>
 
-      <Tabs value={currentTab} onValueChange={setCurrentTab} className="container mx-auto px-6 py-4">
-        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4 mb-0 bg-muted/50 p-1">
-          <TabsTrigger value="home" className="flex items-center gap-2 data-[state=active]:bg-white">
-            <Icon name="Home" size={16} />
+      <Tabs value={currentTab} onValueChange={setCurrentTab} className="container mx-auto px-6 py-6">
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8 bg-white border border-border p-2 rounded-xl shadow-sm">
+          <TabsTrigger 
+            value="home" 
+            className="flex items-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-semibold uppercase text-sm"
+          >
+            <Icon name="Home" size={18} />
             <span className="hidden sm:inline">Главная</span>
           </TabsTrigger>
-          <TabsTrigger value="search" className="flex items-center gap-2 data-[state=active]:bg-white">
-            <Icon name="Search" size={16} />
+          <TabsTrigger 
+            value="search" 
+            className="flex items-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-semibold uppercase text-sm"
+          >
+            <Icon name="Search" size={18} />
             <span className="hidden sm:inline">Поиск</span>
           </TabsTrigger>
-          <TabsTrigger value="favorites" className="flex items-center gap-2 data-[state=active]:bg-white">
-            <Icon name="Heart" size={16} />
+          <TabsTrigger 
+            value="favorites" 
+            className="flex items-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-semibold uppercase text-sm"
+          >
+            <Icon name="Heart" size={18} />
             <span className="hidden sm:inline">Избранное</span>
           </TabsTrigger>
-          <TabsTrigger value="about" className="flex items-center gap-2 data-[state=active]:bg-white">
-            <Icon name="Info" size={16} />
+          <TabsTrigger 
+            value="about" 
+            className="flex items-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-semibold uppercase text-sm"
+          >
+            <Icon name="Info" size={18} />
             <span className="hidden sm:inline">О проекте</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="home" className="animate-fade-in">
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="max-w-6xl mx-auto space-y-8">
             <HeroSection onSearchClick={() => setCurrentTab('search')} />
-            <FeatureCards />
+            <FeatureCards onCategoryClick={(category) => {
+              setSearchQuery(category);
+              setCurrentTab('search');
+              setTimeout(() => handleSearch(), 100);
+            }} />
           </div>
         </TabsContent>
 
