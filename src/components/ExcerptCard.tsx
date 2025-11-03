@@ -20,48 +20,48 @@ interface ExcerptCardProps {
 
 export default function ExcerptCard({ excerpt, isFavorite, onToggleFavorite, onViewDetails }: ExcerptCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-all group">
-      <CardHeader>
+    <Card className="hover:border-primary/30 transition-all border border-border bg-white">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-lg leading-relaxed text-foreground mb-3">
+            <p className="text-lg leading-relaxed text-foreground mb-4 font-light">
               "{excerpt.text}"
             </p>
-            <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="space-y-1 text-sm">
               <p className="font-medium text-foreground">{excerpt.author}</p>
-              <p>«{excerpt.work}», {excerpt.year}</p>
+              <p className="text-muted-foreground font-light">«{excerpt.work}», {excerpt.year}</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onToggleFavorite(excerpt.id)}
-            className="shrink-0"
+            className="shrink-0 h-9 w-9"
           >
             <Icon 
               name={isFavorite ? "Heart" : "Heart"} 
-              size={20} 
-              className={isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-500"}
+              size={18} 
+              className={isFavorite ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}
             />
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 text-sm">
-          <Icon name="Tag" size={16} className="text-accent" />
-          <span className="px-3 py-1 rounded-full bg-accent/10 text-accent font-medium">
+      <CardContent className="pb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2.5 py-1 rounded bg-muted text-muted-foreground font-medium uppercase tracking-wide">
             {excerpt.theme}
           </span>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="pt-0">
         <Button 
           variant="outline" 
-          className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+          size="sm"
+          className="text-sm hover:bg-muted"
           onClick={() => onViewDetails(excerpt)}
         >
-          <Icon name="BookOpen" size={16} className="mr-2" />
           Подробнее
+          <Icon name="ArrowRight" size={14} className="ml-2" />
         </Button>
       </CardFooter>
     </Card>

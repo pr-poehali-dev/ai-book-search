@@ -152,34 +152,34 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-6">
+      <header className="border-b border-border bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Icon name="BookOpen" size={32} className="text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Книжная полка</h1>
+              <Icon name="BookOpen" size={28} className="text-primary" />
+              <span className="text-2xl font-semibold text-foreground">Книжная полка</span>
             </div>
           </div>
         </div>
       </header>
 
-      <Tabs value={currentTab} onValueChange={setCurrentTab} className="container mx-auto px-4 py-8">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-4 mb-8">
-          <TabsTrigger value="home" className="flex items-center gap-2">
+      <Tabs value={currentTab} onValueChange={setCurrentTab} className="container mx-auto px-6 py-4">
+        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4 mb-0 bg-muted/50 p-1">
+          <TabsTrigger value="home" className="flex items-center gap-2 data-[state=active]:bg-white">
             <Icon name="Home" size={16} />
-            Главная
+            <span className="hidden sm:inline">Главная</span>
           </TabsTrigger>
-          <TabsTrigger value="search" className="flex items-center gap-2">
+          <TabsTrigger value="search" className="flex items-center gap-2 data-[state=active]:bg-white">
             <Icon name="Search" size={16} />
-            Поиск
+            <span className="hidden sm:inline">Поиск</span>
           </TabsTrigger>
-          <TabsTrigger value="favorites" className="flex items-center gap-2">
+          <TabsTrigger value="favorites" className="flex items-center gap-2 data-[state=active]:bg-white">
             <Icon name="Heart" size={16} />
-            Избранное
+            <span className="hidden sm:inline">Избранное</span>
           </TabsTrigger>
-          <TabsTrigger value="about" className="flex items-center gap-2">
+          <TabsTrigger value="about" className="flex items-center gap-2 data-[state=active]:bg-white">
             <Icon name="Info" size={16} />
-            О проекте
+            <span className="hidden sm:inline">О проекте</span>
           </TabsTrigger>
         </TabsList>
 
